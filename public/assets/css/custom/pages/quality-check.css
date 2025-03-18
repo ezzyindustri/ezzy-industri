@@ -70,115 +70,56 @@
 }
 
 
+/* Bootstrap Modal Override */
+
+
 /* Modal Styles */
 
-
-/* Modal styles */
-
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 9998;
-    pointer-events: all;
+.modal {
+    z-index: 1055;
+    transition: opacity 0.15s linear;
 }
 
-.defect-modal {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 100%;
+.modal-backdrop {
+    z-index: 1050;
+    transition: opacity 0.15s linear;
+}
+
+.modal-dialog {
+    margin: 1.75rem auto;
     max-width: 500px;
-    z-index: 9999;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    pointer-events: all;
-    will-change: transform;
-    backface-visibility: hidden;
-    perspective: 1000px;
+    transition: transform 0.3s ease-out;
+}
+
+.modal-content {
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+.modal.fade .modal-dialog {
+    transform: translate(0, -50px);
+    transition: transform 0.3s ease-out;
+}
+
+.modal.show .modal-dialog {
+    transform: none;
 }
 
 
-/* Prevent any hover effects when modal is open */
-
-body.modal-open * {
-    pointer-events: none;
-}
-
-
-/* But allow interactions with modal content */
-
-body.modal-open .modal-overlay,
-body.modal-open .defect-modal,
-body.modal-open .defect-modal * {
-    pointer-events: all;
-}
-
-
-/* Prevent content scrolling when modal is open */
-
-body.modal-open {
-    overflow: hidden;
-    padding-right: 0 !important;
-    /* Prevent layout shift */
-}
-
-
-/* Ensure main content stays below modal */
+/* Layout z-index */
 
 #main.main {
-    position: relative;
     z-index: 1;
 }
 
-
-/* Ensure header stays below modal */
-
 .header {
-    position: fixed;
     z-index: 1030;
 }
 
-
-/* Ensure sidebar stays below modal */
-
 .sidebar {
-    position: fixed;
     z-index: 1020;
 }
 
-.defect-modal .modal-dialog {
-    width: 100%;
-    max-width: 500px;
-    /* Modal Styles - Simplified */
-    .modal {
-        z-index: 1055 !important;
-    }
-    .modal-backdrop {
-        z-index: 1050 !important;
-    }
-    .modal-dialog {
-        margin: 1.75rem auto;
-        max-width: 500px;
-    }
-    .modal-content {
-        border-radius: 0.5rem;
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
-    }
-    /* Layout z-index */
-    #main.main {
-        z-index: 1;
-    }
-    .header {
-        z-index: 1030;
-    }
-    .sidebar {
-        z-index: 1020;
-    }
-    /* Remove all other modal-related styles */
+.footer {
+    z-index: 1010;
 }

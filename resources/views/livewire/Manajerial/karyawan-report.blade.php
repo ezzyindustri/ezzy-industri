@@ -100,88 +100,47 @@
                         @forelse($karyawan as $k)
                         <tr>
                             <td>{{ $k->name }}</td>
-                            <td>{{ $k->department->name ?? '-' }}</td>
+                            <td>{{ $k->department?->name ?? '-' }}</td>
                             <!-- Quality Check Column -->
                             <td>
+                                @php
+                                    $qcRate = $k->qc_metrics['rate'] ?? 0;
+                                @endphp
                                 <div>Completed: {{ $k->qc_metrics['completed'] ?? 0 }}/{{ $k->qc_metrics['required'] ?? 0 }}</div>
-                                <div>Rate: {{ $k->qc_metrics['compliance_rate'] ?? 0 }}%</div>
-                                <!-- Quality Check progress bar -->
-                                <div class="progress mt-1" style="height: 5px;">
-                                    <div class="progress-bar progress-bar-striped bg-success progress-bar-animated" 
-                                         role="progressbar" 
-                                         @style([
-                                             'width' => ($k->qc_metrics['compliance_rate'] ?? 0) . '%'
-                                         ])
-                                         aria-valuenow="{{ $k->qc_metrics['compliance_rate'] ?? 0 }}"
-                                         aria-valuemin="0" 
-                                         aria-valuemax="100">
-                                    </div>
-                                </div>
-                            </td>
-                            <!-- Maintenance Check Column -->
-                            <td>
-                                Rate: {{ $k->maintenance_metrics['rate'] ?? 0 }}%
-                                <!-- Maintenance Check progress bar -->
-                                <div class="progress mt-1" style="height: 5px;">
-                                    <div class="progress-bar progress-bar-striped bg-info progress-bar-animated" 
-                                         role="progressbar" 
-                                         @style([
-                                             'width' => ($k->maintenance_metrics['rate'] ?? 0) . '%'
-                                         ])
-                                         aria-valuenow="{{ $k->maintenance_metrics['rate'] ?? 0 }}"
-                                         aria-valuemin="0" 
-                                         aria-valuemax="100">
-                                    </div>
-                                </div>
+                                <div>Rate: <span class="badge bg-success">{{ $qcRate }}%</span></div>
                             </td>
                             
-                            <!-- Production Column -->
-                            <td>
-                                <div>Total: {{ $k->production_metrics['total_runs'] ?? 0 }}</div>
-                                <div>Achievement: {{ $k->production_metrics['achievement_rate'] ?? 0 }}%</div>
-                                <div>Problems: {{ $k->production_metrics['problem_frequency'] ?? 0 }}</div>
-                                <!-- Production progress bar -->
-                                <div class="progress mt-1" style="height: 5px;">
-                                    <div class="progress-bar progress-bar-striped bg-primary progress-bar-animated" 
-                                         role="progressbar" 
-                                         @style([
-                                             'width' => ($k->production_metrics['achievement_rate'] ?? 0) . '%'
-                                         ])
-                                         aria-valuenow="{{ $k->production_metrics['achievement_rate'] ?? 0 }}"
-                                         aria-valuemin="0" 
-                                         aria-valuemax="100">
-                                    </div>
-                                </div>
-                            </td>
                             <td>
                                 @php
-                                    $qcRate = $k->qc_metrics['compliance_rate'] ?? 0;
                                     $maintenanceRate = $k->maintenance_metrics['rate'] ?? 0;
-                                    $productionRate = $k->production_metrics['achievement_rate'] ?? 0;
-                                    $performanceRate = ($qcRate + $maintenanceRate + $productionRate) / 3;
+                                @endphp
+                                <div>AM: {{ $k->maintenance_metrics['completed_am'] ?? 0 }}</div>
+                                <div>PM: {{ $k->maintenance_metrics['completed_pm'] ?? 0 }}</div>
+                                <div>Rate: <span class="badge bg-info">{{ $maintenanceRate }}%</span></div>
+                            </td>
+                            
+                            <td>
+                                @php
+                                    $productionRate = $k->production_metrics['rate'] ?? 0;
+                                @endphp
+                                <div>Total: {{ $k->production_metrics['total'] ?? 0 }}</div>
+                                <div>Rate: <span class="badge bg-primary">{{ $productionRate }}%</span></div>
+                                <div>Problems: {{ $k->production_metrics['problems'] ?? 0 }}</div>
+                            </td>
+                            
+                            <td>
+                                @php
+                                    $performanceRate = $k->performance_rate ?? 0;
                                 @endphp
                                 @if($performanceRate >= 90)
-                                    <span class="badge bg-success">Excellent</span>
+                                    <span class="badge bg-success">{{ number_format($performanceRate, 1) }}% Excellent</span>
                                 @elseif($performanceRate >= 75)
-                                    <span class="badge bg-info">Good</span>
+                                    <span class="badge bg-info">{{ number_format($performanceRate, 1) }}% Good</span>
                                 @elseif($performanceRate >= 60)
-                                    <span class="badge bg-warning">Fair</span>
+                                    <span class="badge bg-warning">{{ number_format($performanceRate, 1) }}% Fair</span>
                                 @else
-                                    <span class="badge bg-danger">Poor</span>
+                                    <span class="badge bg-danger">{{ number_format($performanceRate, 1) }}% Poor</span>
                                 @endif
-                                {{ number_format($performanceRate, 1) }}%
-                                <!-- Performance progress bar -->
-                                <div class="progress mt-1" style="height: 5px;">
-                                    <div class="progress-bar progress-bar-striped bg-primary progress-bar-animated" 
-                                         role="progressbar" 
-                                         @style([
-                                             'width' => $performanceRate . '%'
-                                         ])
-                                         aria-valuenow="{{ $performanceRate }}"
-                                         aria-valuemin="0" 
-                                         aria-valuemax="100">
-                                    </div>
-                                </div>
                             </td>
                             <td>    
                                 <a href="{{ route('manajerial.karyawan.detail.pdf', [

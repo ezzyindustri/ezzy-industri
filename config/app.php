@@ -143,6 +143,7 @@ return [
         Illuminate\Bus\BusServiceProvider::class,
         Illuminate\Queue\QueueServiceProvider::class,
         Illuminate\Mail\MailServiceProvider::class,
+        Illuminate\View\ViewServiceProvider::class,
         
         /*
          * Application Service Providers...

@@ -12,7 +12,9 @@ use Illuminate\Support\Facades\Log;
 class MaintenanceTaskManagement extends Component
 {
     use WithPagination;
-
+    protected $paginationTheme = 'bootstrap';
+    
+    public $search = '';
     public $selectedMachine;
     public $maintenanceType = 'am';
     public $taskName;
@@ -43,7 +45,6 @@ class MaintenanceTaskManagement extends Component
     {
         $this->validate();
 
-        // Convert shift IDs to integers
         $shiftIds = array_map('intval', array_values($this->shiftIds));
 
         MaintenanceTask::create([
@@ -84,7 +85,6 @@ class MaintenanceTaskManagement extends Component
     {
         $this->validate();
 
-        // Convert shift IDs to integers
         $shiftIds = array_map('intval', array_values($this->shiftIds));
 
         $task = MaintenanceTask::findOrFail($this->editingId);
@@ -129,16 +129,18 @@ class MaintenanceTaskManagement extends Component
 
     public function render()
     {
-        $tasks = MaintenanceTask::with(['machine'])->paginate(10);
-        // Temporary debug
-        foreach($tasks as $task) {
-            Log::info('Task ID: ' . $task->id . ' Shift IDs: ' . $task->shift_ids);
-        }
-        
-        return view('livewire.manajerial.manajemen.maintenance-task-management', [
+        $tasks = MaintenanceTask::query()
+            ->when($this->search, function($query) {
+                $query->where('task_name', 'like', '%' . $this->search . '%');
+            })
+            ->with('machine')
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+    
+        return view('livewire.Manajerial.manajemen.maintenance-task-management', [
+            'tasks' => $tasks,
             'machines' => Machine::all(),
             'shifts' => Shift::all(),
-            'tasks' => $tasks
         ]);
     }
 }

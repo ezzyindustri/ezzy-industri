@@ -16,6 +16,8 @@
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
 
        <!-- Template Main CSS File -->
        <link href="/assets/css/style.css" rel="stylesheet">
@@ -201,6 +203,29 @@
         timerProgressBar: true,
     });
     </script>
+
+@livewireScripts
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        Livewire.on('swal-confirm', (data) => {
+            Swal.fire({
+                title: data.title || 'Konfirmasi',
+                text: data.text || 'Apakah Anda yakin?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: data.confirmText || 'Ya, lanjutkan',
+                cancelButtonText: data.cancelText || 'Batal',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Ganti emit dengan dispatch untuk Livewire v3
+                    Livewire.dispatch('showNGForm');
+                }
+            });
+        });
+    });
+</script>
+
 
     
    

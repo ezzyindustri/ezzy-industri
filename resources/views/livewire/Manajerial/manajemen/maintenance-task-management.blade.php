@@ -18,11 +18,12 @@
         @endif
 
         <div class="row">
+            <!-- Form Column -->
             <div class="col-lg-4">
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">{{ $isEditing ? 'Edit Task' : 'Tambah Task Baru' }}</h5>
-                        <form wire:submit.prevent="{{ $isEditing ? 'update' : 'create' }}" enctype="multipart/form-data">
+                        <form wire:submit.prevent="{{ $isEditing ? 'update' : 'create' }}">
                             <div class="mb-3">
                                 <label class="form-label">Mesin</label>
                                 <select class="form-select" wire:model="selectedMachine" required>
@@ -85,10 +86,9 @@
                                 @foreach($shifts as $shift)
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" 
-                                               wire:model.live="shiftIds" 
+                                               wire:model="shiftIds" 
                                                value="{{ $shift->id }}" 
-                                               id="shift{{ $shift->id }}"
-                                               @checked(in_array($shift->id, $shiftIds))>
+                                               id="shift{{ $shift->id }}">
                                         <label class="form-check-label" for="shift{{ $shift->id }}">
                                             {{ $shift->name }}
                                         </label>
@@ -127,6 +127,7 @@
                 </div>
             </div>
 
+            <!-- Table Column -->
             <div class="col-lg-8">
                 <div class="card">
                     <div class="card-body">
@@ -157,18 +158,11 @@
                                             </td>
                                             <td>{{ ucfirst($task->frequency) }}</td>
                                             <td>
-                                                @php
-                                                    $shiftIds = json_decode($task->shift_ids) ?? [];
-                                                @endphp
-                                                @if(count($shiftIds) > 0)
-                                                    @foreach($shifts as $shift)
-                                                        @if(in_array($shift->id, $shiftIds))
-                                                            <span class="badge bg-info">{{ $shift->name }}</span>
-                                                        @endif
-                                                    @endforeach
-                                                @else
-                                                    <span class="text-muted">-</span>
-                                                @endif
+                                                @foreach($shifts as $shift)
+                                                    @if(in_array($shift->id, json_decode($task->shift_ids) ?? []))
+                                                        <span class="badge bg-info">{{ $shift->name }}</span>
+                                                    @endif
+                                                @endforeach
                                             </td>
                                             <td>
                                                 <span class="badge {{ $task->is_active ? 'bg-success' : 'bg-secondary' }}">
@@ -180,8 +174,8 @@
                                                     <i class="bi bi-pencil"></i>
                                                 </button>
                                                 <button class="btn btn-sm btn-danger" 
-                                                    wire:click="delete({{ $task->id }})"
-                                                    onclick="return confirm('Yakin ingin menghapus task ini?')">
+                                                        wire:click="delete({{ $task->id }})"
+                                                        onclick="return confirm('Yakin ingin menghapus task ini?')">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </td>
@@ -194,7 +188,12 @@
                                 </tbody>
                             </table>
                         </div>
-                        {{ $tasks->links() }}
+                        
+                        @if($tasks->hasPages())
+                            <div class="d-flex justify-content-center mt-4">
+                                {{ $tasks->links() }}
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>

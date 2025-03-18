@@ -124,6 +124,16 @@ class KaryawanReport extends Component
     
         $karyawan = $query->paginate(10);
         
+        // Calculate metrics for each employee
+        $karyawan->getCollection()->transform(function ($user) {
+            $metrics = $this->calculateMetrics($user);
+            $user->qc_metrics = $metrics['qc_metrics'];
+            $user->maintenance_metrics = $metrics['maintenance_metrics'];
+            $user->production_metrics = $metrics['production_metrics'];
+            $user->performance_rate = $metrics['performance_rate'];
+            return $user;
+        });
+
         return view('livewire.manajerial.karyawan-report', [
             'karyawan' => $karyawan,
             'departments' => Department::all()
