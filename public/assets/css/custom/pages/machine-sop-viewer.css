@@ -1,0 +1,125 @@
+/* SOP Header */
+
+.sop-header {
+    background: #f8f9fa;
+    padding: 1.25rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+.sop-header h5 {
+    color: #2c3e50;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.sop-badges .badge {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.875rem;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+
+/* SOP Info Tables */
+
+.sop-info-table {
+    background: #ffffff;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    overflow: hidden;
+}
+
+.sop-info-table td {
+    padding: 0.75rem 1rem;
+    border-color: #e9ecef;
+}
+
+.sop-info-table td:first-child {
+    background: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+    width: 35%;
+}
+
+
+/* Steps Table */
+
+.steps-table {
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.steps-table thead th {
+    background: #f1f3f5;
+    color: #495057;
+    padding: 0.875rem 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.steps-table tbody td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.steps-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+
+/* Step Image */
+
+.step-image {
+    background: #ffffff;
+    padding: 0.5rem;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.step-image img {
+    border-radius: 2px;
+    max-width: 100%;
+    height: auto;
+}
+
+
+/* Checkpoint Info */
+
+.checkpoint-info {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 0.875rem;
+}
+
+.checkpoint-info strong {
+    color: #495057;
+    font-size: 0.875rem;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+
+/* Responsive Adjustments */
+
+@media (max-width: 768px) {
+    .sop-header {
+        padding: 1rem;
+    }
+    .steps-table thead th {
+        padding: 0.75rem;
+    }
+    .steps-table tbody td {
+        padding: 0.75rem;
+    }
+}

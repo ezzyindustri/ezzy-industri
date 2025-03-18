@@ -1,0 +1,215 @@
+/* Dashboard Layout */
+
+.dashboard {
+    padding: 1.5rem;
+    background: #f0f2f5;
+}
+
+
+/* Stat Cards */
+
+.stat-card {
+    border: none;
+    border-radius: 24px;
+    background: linear-gradient(145deg, #4e73df 0%, #224abe 100%);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    height: 100%;
+    position: relative;
+}
+
+.stat-card:nth-child(1) {
+    background: linear-gradient(145deg, #4e73df 0%, #224abe 100%);
+}
+
+.stat-card:nth-child(2) {
+    background: linear-gradient(145deg, #e74a3b 0%, #be2617 100%);
+}
+
+.stat-card:nth-child(3) {
+    background: linear-gradient(145deg, #f6c23e 0%, #dda20a 100%);
+}
+
+.stat-card:nth-child(4) {
+    background: linear-gradient(145deg, #1cc88a 0%, #13855c 100%);
+}
+
+.stat-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+}
+
+.stat-card .card-body {
+    padding: 2rem;
+    position: relative;
+    z-index: 1;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+    pointer-events: none;
+}
+
+
+/* Icon Box */
+
+.stat-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+}
+
+.icon-box {
+    width: 95px;
+    height: 95px;
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.icon-box i {
+    font-size: 48px;
+    color: white;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+
+/* Stat Details */
+
+.stat-details {
+    width: 100%;
+}
+
+.stat-value {
+    color: white;
+    font-size: 2.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 0.5rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.stat-label {
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-text {
+    display: block;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+
+/* Small text in stat value */
+
+.stat-value small {
+    font-size: 1rem;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
+
+/* Activity Cards */
+
+.activity-card {
+    background: white;
+    border-radius: 24px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+}
+
+.activity-card .card-title {
+    color: #1e293b;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+
+/* Tables */
+
+.table {
+    margin: 0;
+}
+
+.table th {
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    padding: 1rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.table td {
+    padding: 1rem;
+    color: #1e293b;
+    font-size: 0.875rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+
+/* Responsive Adjustments */
+
+@media (max-width: 1400px) {
+    .icon-box {
+        width: 85px;
+        height: 85px;
+    }
+    .icon-box i {
+        font-size: 42px;
+    }
+    .stat-value {
+        font-size: 2.25rem;
+    }
+}
+
+@media (max-width: 992px) {
+    .icon-box {
+        width: 75px;
+        height: 75px;
+    }
+    .icon-box i {
+        font-size: 38px;
+    }
+    .stat-value {
+        font-size: 2rem;
+    }
+    .stat-label {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .stat-card {
+        margin-bottom: 1rem;
+    }
+    .stat-content {
+        gap: 1rem;
+    }
+    .icon-box {
+        width: 65px;
+        height: 65px;
+    }
+    .icon-box i {
+        font-size: 32px;
+    }
+}
