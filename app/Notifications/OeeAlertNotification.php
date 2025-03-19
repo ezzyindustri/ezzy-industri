@@ -4,8 +4,11 @@ namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
+use App\Models\Machine;
+use App\Models\Production;
+use Illuminate\Support\Facades\Log;
 
 class OeeAlertNotification extends Notification implements ShouldQueue
 {
@@ -14,12 +17,28 @@ class OeeAlertNotification extends Notification implements ShouldQueue
     protected $machine;
     protected $oeeScore;
     protected $targetOee;
+    protected $productionId;
 
-    public function __construct($machine, $oeeScore, $targetOee)
+    public function __construct($machine, $oeeScore, $targetOee, $productionId = null)
     {
-        $this->machine = $machine;
+        // Pastikan machine adalah objek Machine, bukan string
+        if (is_string($machine)) {
+            $this->machine = Machine::find($machine) ?? $machine;
+        } else {
+            $this->machine = $machine;
+        }
+        
         $this->oeeScore = $oeeScore;
         $this->targetOee = $targetOee;
+        $this->productionId = $productionId;
+        
+        Log::info('OEE Alert Notification initialized', [
+            'machine' => is_object($this->machine) ? $this->machine->name : $machine,
+            'production_id' => $productionId,
+            'production_found' => $productionId ? (Production::find($productionId) ? 'yes' : 'no') : 'N/A',
+            'oee_score' => $oeeScore,
+            'target_oee' => $targetOee
+        ]);
     }
 
     public function via($notifiable)
@@ -29,15 +48,40 @@ class OeeAlertNotification extends Notification implements ShouldQueue
 
     public function toMail($notifiable)
     {
-        $difference = $this->targetOee - $this->oeeScore;
+        $production = null;
+        if ($this->productionId) {
+            $production = Production::find($this->productionId);
+        }
         
+        // Pastikan machine adalah objek dengan property name
+        $machineName = is_object($this->machine) ? $this->machine->name : 'Unknown Machine';
+        
+        Log::info('Preparing OEE Alert email', [
+            'to' => $notifiable->routes['mail'],
+            'machine' => $machineName,
+            'oee_score' => $this->oeeScore,
+            'target_oee' => $this->targetOee
+        ]);
+
         return (new MailMessage)
-            ->subject('OEE Alert: ' . $this->machine->name)
-            ->line('OEE Score untuk mesin ' . $this->machine->name . ' berada di bawah target.')
-            ->line('Current OEE: ' . number_format($this->oeeScore, 2) . '%')
-            ->line('Target OEE: ' . number_format($this->targetOee, 2) . '%')
-            ->line('Difference: -' . number_format($difference, 2) . '%')
-            ->action('Lihat Detail', url('/manajerial/oee/' . $this->machine->id . '/detail'))
-            ->line('Mohon segera lakukan pengecekan dan tindakan yang diperlukan.');
+            ->subject('ALERT: OEE Di Bawah Target untuk ' . $machineName)
+            ->view('emails.oee-alert', [
+                'machine' => $this->machine,
+                'machineName' => $machineName, // Tambahkan ini untuk template
+                'oeeScore' => $this->oeeScore,
+                'targetOee' => $this->targetOee,
+                'production' => $production
+            ]);
+    }
+
+    public function toArray($notifiable)
+    {
+        return [
+            'machine_id' => is_object($this->machine) ? $this->machine->id : null,
+            'machine_name' => is_object($this->machine) ? $this->machine->name : 'Unknown Machine',
+            'oee_score' => $this->oeeScore,
+            'target_oee' => $this->targetOee,
+            'production_id' => $this->productionId
+        ];
     }
 }

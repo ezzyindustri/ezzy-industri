@@ -4,12 +4,16 @@ namespace App\Livewire\Karyawan\Production;
 
 use Livewire\Component;
 use App\Models\Production;
+use App\Models\OeeRecord;
+use App\Models\Machine;
+use App\Traits\OeeAlertTrait;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log; 
 
-
 class FinishProduction extends Component
 {
+    use OeeAlertTrait;
+    
     public $production;
     public $totalProduction = 0;
     public $defectCount = 0;
@@ -45,6 +49,47 @@ class FinishProduction extends Component
                 'defect_type' => $this->defectType,
                 'notes' => $this->notes
             ]);
+
+            // Setelah produksi selesai, hitung OEE dan kirim notifikasi jika perlu
+            $productionId = $this->production->id;
+            
+            Log::info('Production finished, checking OEE for notifications', [
+                'production_id' => $productionId,
+                'machine_id' => $this->production->machine_id
+            ]);
+            
+            // Update OEE record secara real-time
+            try {
+                // Panggil metode updateFromProduction di model OeeRecord
+                $oeeRecord = OeeRecord::updateFromProduction($productionId);
+                
+                if ($oeeRecord) {
+                    Log::info('OEE Record updated successfully', [
+                        'production_id' => $productionId,
+                        'oee_score' => $oeeRecord->oee_score
+                    ]);
+                    
+                    // Kirim notifikasi jika OEE di bawah target
+                    $machine = Machine::find($this->production->machine_id);
+                    if ($machine && $oeeRecord->oee_score < $machine->oee_target) {
+                        Log::info('OEE below target, sending notification', [
+                            'oee_score' => $oeeRecord->oee_score,
+                            'target' => $machine->oee_target
+                        ]);
+                        
+                        // Gunakan trait OeeAlertTrait
+                        $this->checkAndSendOeeAlert($machine, $oeeRecord->oee_score, $productionId);
+                    }
+                } else {
+                    Log::warning('Failed to update OEE record', [
+                        'production_id' => $productionId
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Log::error('Error updating OEE record: ' . $e->getMessage(), [
+                    'production_id' => $productionId
+                ]);
+            }
 
             Log::info('Mencoba menampilkan modal');
             

@@ -23,7 +23,8 @@ class MachineManagement extends Component
         'status' => 'active',
         'oee_target' => 85.00,
         'alert_enabled' => true,
-        'alert_email' => ''
+        'alert_email' => '',
+        'alert_phone' => '' // Tambahkan field alert_phone
     ];
 
     public function mount()
@@ -51,7 +52,7 @@ class MachineManagement extends Component
         $this->form = $machine->only([
             'code', 'name', 'type', 'description', 
             'location', 'status', 'oee_target', 
-            'alert_enabled', 'alert_email'
+            'alert_enabled', 'alert_email', 'alert_phone' // Tambahkan alert_phone
         ]);
         $this->showModal = true;
     }
@@ -82,7 +83,8 @@ class MachineManagement extends Component
             'form.status' => 'required|in:active,inactive',
             'form.oee_target' => 'required|numeric|min:0|max:100',
             'form.alert_enabled' => 'boolean',
-            'form.alert_email' => 'nullable|required_if:form.alert_enabled,true|email'
+            'form.alert_email' => 'nullable|required_if:form.alert_enabled,true|email',
+            'form.alert_phone' => 'nullable|regex:/^[0-9]{10,15}$/' // Validasi nomor telepon
         ]);
 
         if ($this->editMode) {
@@ -108,7 +110,8 @@ class MachineManagement extends Component
             'status' => 'active',
             'oee_target' => 85.00,
             'alert_enabled' => true,
-            'alert_email' => ''
+            'alert_email' => '',
+            'alert_phone' => '' // Reset alert_phone
         ];
         $this->machineId = null;
     }

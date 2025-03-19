@@ -56,7 +56,8 @@
                                             </td>
                                             <td>
                                                 @if($machine->alert_enabled)
-                                                    <span class="badge bg-success" title="{{ $machine->alert_email }}">
+                                                    <span class="badge bg-success" 
+                                                          title="Email: {{ $machine->alert_email }}{{ $machine->alert_phone ? ', WA: '.$machine->alert_phone : '' }}">
                                                         <i class="bi bi-bell-fill"></i> Active
                                                     </span>
                                                 @else
@@ -173,6 +174,19 @@
                                    wire:model="form.alert_email" 
                                    placeholder="supervisor@example.com">
                             @error('form.alert_email') 
+                                <span class="text-danger">{{ $message }}</span> 
+                            @enderror
+                        </div>
+                        
+                        <!-- Tambahkan field WhatsApp Alert -->
+                        <div class="mb-3" x-show="$wire.form.alert_enabled">
+                            <label class="form-label">WhatsApp Alert</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   wire:model="form.alert_phone" 
+                                   placeholder="628123456789">
+                            <div class="form-text">Format: 628xxxxxxxxxx (tanpa tanda + atau spasi)</div>
+                            @error('form.alert_phone') 
                                 <span class="text-danger">{{ $message }}</span> 
                             @enderror
                         </div>

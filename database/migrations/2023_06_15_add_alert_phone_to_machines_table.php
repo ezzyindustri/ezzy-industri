@@ -6,19 +6,23 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up()
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
     {
         Schema::table('machines', function (Blueprint $table) {
-            $table->decimal('oee_target', 5, 2)->default(85.00); // Default target 85%
-            $table->boolean('alert_enabled')->default(true);
-            $table->string('alert_email')->nullable();
+            $table->string('alert_phone')->nullable()->after('alert_email');
         });
     }
 
-    public function down()
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
     {
         Schema::table('machines', function (Blueprint $table) {
-            $table->dropColumn(['oee_target', 'alert_enabled', 'alert_email']);
+            $table->dropColumn('alert_phone');
         });
     }
 };

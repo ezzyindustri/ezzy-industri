@@ -10,6 +10,7 @@ use App\Models\Sop;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Product;  // Tambahkan ini di bagian atas
+use Illuminate\Support\Facades\Log;
 
 class StartProduction extends Component
 {
@@ -88,6 +89,9 @@ class StartProduction extends Component
         $this->validate();
     
         try {
+            // Log untuk debugging
+            Log::info("Starting production process");
+            
             $machine = Machine::find($this->selectedMachine);
             $product = Product::find($this->product_id);
             
@@ -100,10 +104,11 @@ class StartProduction extends Component
                     'machine_id' => $this->selectedMachine,
                     'machine_name' => $machine->name,
                     'shift_id' => $this->selectedShift,
-                    'product_id' => $product->id,           // tambahkan ini
+                    'product_id' => $product->id,
                     'product' => $product->name,
-                    'target_per_shift' => $product->target_per_shift,  // tambahkan ini
-                    'quality_sop_id' => $this->qualitySop ? $this->qualitySop->id : null
+                    'target_per_shift' => $product->target_per_shift,
+                    'quality_sop_id' => $this->qualitySop ? $this->qualitySop->id : null,
+                    'is_initial_production' => true // Tambahkan flag ini
                 ]
             ]);
     

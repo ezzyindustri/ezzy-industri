@@ -12,12 +12,14 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Sop;
 use App\Models\ProductionSopCheck;
 use Livewire\Attributes\On;
+use App\Models\OeeRecord;
 
 class QualityCheckForm extends Component
 {
     // Basic properties
     public $production;
     public $productionId;
+    public $stepId; // Add this property declaration
     public $sampleSize = 1;
     public $notes;
     public $parameters = [];
@@ -48,9 +50,10 @@ class QualityCheckForm extends Component
     $this->dispatch('closeNGModal');
     }
     
-    public function mount($productionId)
+    public function mount($productionId = null, $stepId = null)
     {
         $this->productionId = $productionId;
+        $this->stepId = $stepId; // Pastikan stepId diinisialisasi di sini
         $this->production = Production::with(['product', 'shift'])->findOrFail($productionId);
         $this->loadSop();
     }
@@ -61,21 +64,27 @@ class QualityCheckForm extends Component
             $step = $this->sop->steps->where('id', $stepId)->first();
             
             $measurement = trim($this->measurements[$stepId]);
-            if ($measurement === '' || !is_numeric($measurement)) {
+            if ($measurement === '') {
                 return;
             }
-            $value = floatval(str_replace(',', '.', $measurement));
+            
+            // Ganti koma dengan titik untuk validasi numerik
+            $numericValue = str_replace(',', '.', $measurement);
+            if (!is_numeric($numericValue)) {
+                return;
+            }
+            
+            $value = floatval($numericValue);
             $min = floatval(str_replace(',', '.', $step->toleransi_min));
             $max = floatval(str_replace(',', '.', $step->toleransi_max));
-    
+
             $epsilon = $value < 0.1 ? 0.00001 : 0.001;
             
-            $this->hasNG = ($value < ($min - $epsilon)) || ($value > ($max + $epsilon));
-            
-            if ($this->hasNG) {
+            if (($value < ($min - $epsilon)) || ($value > ($max + $epsilon))) {
+                $this->hasNG = true;
                 $this->ngData['step_id'] = $stepId;
-                $this->showNGModal = true;
-                $this->dispatch('show-alert', 'Ukuran di luar toleransi!'); // Tambah event SweetAlert
+                // Tidak perlu menampilkan modal atau alert di sini
+                // Hanya tandai bahwa ada nilai NG
             }
         }
     }
@@ -95,109 +104,110 @@ class QualityCheckForm extends Component
     public function validateMeasurements()
     {
         Log::info('Starting measurement validation');
-        $hasNG = false;
         
-        foreach ($this->measurements as $stepId => $value) {
-            $this->validate([
-                'measurements.*' => 'required|numeric',
-            ]);
-    
-            foreach ($this->sop->steps as $step) {
-                $measurement = trim($this->measurements[$step->id] ?? '');
-                if ($measurement === '' || !is_numeric($measurement)) {
-                    continue;
-                }
-    
-                $value = floatval(str_replace(',', '.', $measurement));
-                $min = floatval(str_replace(',', '.', $step->toleransi_min));
-                $max = floatval(str_replace(',', '.', $step->toleransi_max));
-    
-                if ($value < $min || $value > $max) {
-                    $this->hasNG = true;
-                    $this->ngData['step_id'] = $step->id;
-                    Log::info('NG detected', ['step_id' => $step->id]);
-                    // Gunakan nama event yang konsisten
-                    $this->dispatch('ng-detected');
-                    return;
-                }
+        // Modifikasi validasi untuk menerima format angka dengan koma
+        $this->validate([
+            'measurements.*' => [
+                'required',
+                function ($attribute, $value, $fail) {
+                    // Ganti koma dengan titik untuk validasi numerik
+                    $numericValue = str_replace(',', '.', $value);
+                    if (!is_numeric($numericValue)) {
+                        $fail('Nilai harus berupa angka.');
+                    }
+                },
+            ],
+        ]);
+        
+        // Periksa apakah ada nilai di luar toleransi
+        $hasNG = false;
+        foreach ($this->measurements as $stepId => $measurement) {
+            $step = $this->sop->steps->where('id', $stepId)->first();
+            if (!$step) continue;
+            
+            $value = floatval(str_replace(',', '.', $measurement));
+            $min = floatval(str_replace(',', '.', $step->toleransi_min));
+            $max = floatval(str_replace(',', '.', $step->toleransi_max));
+            
+            $epsilon = $value < 0.1 ? 0.00001 : 0.001;
+            
+            if (($value < ($min - $epsilon)) || ($value > ($max + $epsilon))) {
+                $hasNG = true;
+                $this->ngData['step_id'] = $stepId;
+                break;
             }
         }
         
-        // Jika tidak ada NG, simpan data dan redirect ke halaman status produksi
-        if (!$this->hasNG) {
-            $this->saveCheck();
-            return redirect()->route('production.status');
+        if ($hasNG) {
+            $this->hasNG = true;
+            // Hanya kirim event untuk menampilkan konfirmasi
+            $this->dispatch('show-ng-modal');
+            return;
         }
+        
+        // Jika tidak ada NG, simpan data
+        $this->saveCheck();
     }
 
-
+/**
+ * Menyimpan data NG (Not Good/defect)
+ */
 public function saveNGData()
 {
+    Log::info('Saving NG data', $this->ngData);
+    
     $this->validate([
-        'ngData.count' => 'required|integer|min:1',
-        'ngData.type' => 'required|string|in:dimensional,surface,material',
-        'ngData.notes' => 'required|string|max:255'
-    ]);
-
-    Log::info('Saving NG data', [
-        'count' => $this->ngData['count'],
-        'type' => $this->ngData['type']
+        'ngData.count' => 'required|numeric|min:1',
+        'ngData.type' => 'required|string',
+        'ngData.notes' => 'required|string',
     ]);
 
     try {
-        DB::beginTransaction();
-        
-        // Simpan data NG ke tabel quality_checks
-        $qualityCheck = QualityCheck::create([
-            'production_id' => $this->productionId,
-            'user_id' => Auth::id(),
-            'status' => 'ng',
-            'sample_size' => $this->sampleSize,
-            'defect_count' => $this->ngData['count'],
-            'defect_type' => $this->ngData['type'],
-            'defect_notes' => $this->ngData['notes'],
-            'check_time' => now()
+        // Gunakan data dari array ngData
+        Log::info('Saving NG data', [
+            'count' => $this->ngData['count'],
+            'type' => $this->ngData['type'],
+            'notes' => $this->ngData['notes'],
+            'step_id' => $this->ngData['step_id']
         ]);
         
-        // Simpan semua detail pengukuran ke tabel quality_check_details
-        foreach ($this->measurements as $stepId => $value) {
-            $step = $this->sop->steps->where('id', $stepId)->first();
-            
-            if ($step && is_numeric(str_replace(',', '.', $value))) {
-                // Gunakan fungsi helper untuk konversi nilai
-                $measuredValue = $this->convertToDecimal($value);
-                $minValue = $this->convertToDecimal($step->toleransi_min);
-                $maxValue = $this->convertToDecimal($step->toleransi_max);
-                $standardValue = $this->convertToDecimal($step->nilai_standar);
-                
-                $epsilon = $measuredValue < 0.1 ? 0.00001 : 0.001;
-                $status = ($measuredValue >= ($minValue - $epsilon) && $measuredValue <= ($maxValue + $epsilon)) ? 'ok' : 'ng';
-                
-                QualityCheckDetail::create([
-                    'quality_check_id' => $qualityCheck->id,
-                    'parameter' => $step->judul,
-                    'standard_value' => $standardValue,
-                    'measured_value' => $measuredValue,
-                    'tolerance_min' => $minValue,
-                    'tolerance_max' => $maxValue,
-                    'status' => $status
-                ]);
-            }
-        }
+        // Simpan data NG ke database
+        $qualityCheck = QualityCheck::create([
+            'production_id' => $this->productionId,
+            'step_id' => $this->ngData['step_id'],
+            'defect_count' => $this->ngData['count'],
+            'defect_type' => $this->ngData['type'],
+            'notes' => $this->ngData['notes'],
+            'user_id' => Auth::id(),
+            'check_time' => now(),
+            'status' => 'ng',
+            'sample_size' => $this->sampleSize ?? 1, // Add sample_size field with default value 1
+        ]);
         
-        DB::commit();
-        $this->showNGModal = false;
-        $this->dispatch('closeNGModal');
-        session()->flash('success', 'Data NG berhasil disimpan!');
+        // Segera update OEE record setelah menyimpan data NG
+        Log::info('Updating OEE record after quality check', [
+            'production_id' => $this->productionId,
+            'has_ng' => true
+        ]);
         
-        // Redirect ke halaman production status
-        return redirect()->route('production.status');
+        // Update OEE record
+        $oeeRecord = OeeRecord::updateFromProduction($this->productionId);
         
     } catch (\Exception $e) {
-        DB::rollback();
-        Log::error('Error saving NG data: ' . $e->getMessage());
+        Log::error('Error saving NG data: ' . $e->getMessage(), [
+            'trace' => $e->getTraceAsString()
+        ]);
         session()->flash('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        return;
     }
+
+    $this->showNGModal = false;
+    
+    // Simpan data quality check dengan status NG
+    $this->saveCheck();
+    
+    // Redirect ke halaman production status
+    return redirect()->route('production.status')->with('success', 'Data quality check berhasil disimpan');
 }
 
 
@@ -261,19 +271,36 @@ public function saveCheck()
                 $epsilon = $measuredValue < 0.1 ? 0.00001 : 0.001;
                 $status = ($measuredValue >= ($minValue - $epsilon) && $measuredValue <= ($maxValue + $epsilon)) ? 'ok' : 'ng';
 
+                // Di method saveCheck dan saveNGData, ubah bagian pembuatan QualityCheckDetail
                 QualityCheckDetail::create([
                     'quality_check_id' => $qualityCheck->id,
                     'parameter' => $step->judul,
-                    'standard_value' => $standardValue,
-                    'measured_value' => $measuredValue,
-                    'tolerance_min' => $minValue,
-                    'tolerance_max' => $maxValue,
+                    'standard_value' => $this->convertToDecimal($step->nilai_standar),
+                    'measured_value' => $this->convertToDecimal($value),
+                    'tolerance_min' => $this->convertToDecimal($step->toleransi_min),
+                    'tolerance_max' => $this->convertToDecimal($step->toleransi_max),
                     'status' => $status
                 ]);
             }
         }
 
         DB::commit();
+        
+        // Update OEE Record secara real-time
+        try {
+            Log::info('Updating OEE record after quality check', [
+                'production_id' => $this->productionId,
+                'has_ng' => $this->hasNG
+            ]);
+            
+            // Panggil metode updateFromProduction di model OeeRecord
+            OeeRecord::updateFromProduction($this->productionId);
+        } catch (\Exception $e) {
+            Log::error('Error updating OEE record after quality check: ' . $e->getMessage(), [
+                'production_id' => $this->productionId
+            ]);
+        }
+        
         session()->flash('success', 'Data pemeriksaan kualitas berhasil disimpan');
         return redirect()->route('production.status');
 
@@ -295,19 +322,10 @@ private function convertToDecimal($value)
     
     // Pastikan nilai adalah numerik
     if (is_numeric($value)) {
-        // Konversi ke string untuk mempertahankan presisi
-        $floatValue = (float) $value;
-        
-        // Hitung jumlah digit setelah desimal di nilai asli
-        $decimalPlaces = 0;
-        if (strpos($value, '.') !== false) {
-            $decimalPlaces = strlen(substr(strrchr($value, '.'), 1));
-        }
-        
-        // Gunakan format dengan presisi yang sesuai
-        return number_format($floatValue, $decimalPlaces, '.', '');
+        // Kembalikan nilai sebagai string untuk mempertahankan presisi
+        return $value;
     }
     
-    return 0; // Default jika tidak valid
+    return '0'; // Default jika tidak valid
 }
 }

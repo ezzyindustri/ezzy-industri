@@ -6,6 +6,8 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use App\Models\Production;
 use App\Models\ProductionProblem;
+use App\Models\OeeRecord;
+use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\On;
 
 class ReportProblem extends Component
@@ -47,7 +49,23 @@ class ReportProblem extends Component
             'reported_at' => now()
         ]);
 
+        // Update production status
         Production::find($this->productionId)->update(['status' => 'problem']);
+
+        // Update OEE Record secara real-time
+        try {
+            Log::info('Updating OEE record after problem reported', [
+                'production_id' => $this->productionId,
+                'problem_type' => $this->problemType
+            ]);
+            
+            // Panggil metode updateFromProduction di model OeeRecord
+            OeeRecord::updateFromProduction($this->productionId);
+        } catch (\Exception $e) {
+            Log::error('Error updating OEE record after problem reported: ' . $e->getMessage(), [
+                'production_id' => $this->productionId
+            ]);
+        }
 
         $this->dispatch('closeModal'); // Ganti ke event yang sama dengan script JS
         $this->reset(['problemType', 'notes', 'photo']);

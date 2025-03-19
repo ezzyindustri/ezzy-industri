@@ -66,19 +66,16 @@
                                         </div>
 
                                         <div class="text-center">
-                                            <button type="submit" 
-                                                    class="btn btn-primary px-5" 
-                                                    wire:loading.attr="disabled"
-                                                    wire:target="startProduction">
-                                                <span wire:loading.remove wire:target="startProduction">
-                                                    <i class="bi bi-arrow-right-circle me-1"></i>
-                                                    LANJUT KE CHECKSHEET
-                                                </span>
-                                                <span wire:loading wire:target="startProduction">
-                                                    <span class="spinner-border spinner-border-sm me-1"></span>
-                                                    Memproses...
-                                                </span>
-                                            </button>
+                                        <button type="button" 
+                                            class="btn btn-primary px-5" 
+                                            wire:click="startProduction"
+                                            wire:loading.attr="disabled">
+                                            <i class="bi bi-arrow-right-circle me-1"></i>
+                                            <span wire:loading.remove wire:target="startProduction">
+                                                LANJUT KE CHECKSHEET
+                                            </span>
+                                        </button>
+
                                         </div>
                                     </form>
                                 </div>

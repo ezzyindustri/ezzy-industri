@@ -18,7 +18,8 @@ class Machine extends Model
         'status',
         'oee_target',
         'alert_enabled',
-        'alert_email'
+        'alert_email',
+        'alert_phone' // Tambahkan field alert_phone
     ];
 
     protected $casts = [
@@ -36,12 +37,14 @@ class Machine extends Model
     {
         return $this->hasMany(Sop::class);
     }
+    
     public function oeeRecords()
     {
-    return $this->hasMany(OeeRecord::class);
+        return $this->hasMany(OeeRecord::class);
     }
+    
     public function productions()
     {
-    return $this->hasMany(Production::class);
+        return $this->hasMany(Production::class);
     }
 }

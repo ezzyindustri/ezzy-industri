@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\QualityCheck;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use Livewire\Attributes\On;
 
 class OeeDetail extends Component
 {
@@ -21,6 +22,8 @@ class OeeDetail extends Component
     public $averageQuality;
     public $chartData;
     public $oeeScore;
+    public $lastUpdated;
+    public $refreshInterval = 300000; // 5 menit dalam milidetik
     
     // Properti untuk perhitungan OEE
     public $plannedProductionTime = 0;
@@ -28,7 +31,7 @@ class OeeDetail extends Component
     public $downtimeProblems = 0;
     public $downtimeMaintenance = 0;
     public $totalDowntime = 0;
-    public $downtime = 0;         // Tambahan properti yang kurang
+    public $downtime = 0;
     public $idealCycleTime = 0;
     public $totalOutput = 0;
     public $defectCount = 0;
@@ -40,8 +43,16 @@ class OeeDetail extends Component
         $this->loadData();
     }
 
+    #[On('refresh-oee-detail')]
+    public function refreshData()
+    {
+        $this->loadData();
+    }
+
     public function loadData()
     {
+        $startTime = microtime(true);
+        
         $query = Production::where('machine_id', $this->machine->id)
             ->with(['shift', 'product', 'problems', 'productionDowntimes', 'qualityChecks']);
 
@@ -113,10 +124,10 @@ class OeeDetail extends Component
         $this->averagePerformance = round($records->avg('performance_rate') ?? 0, 2);
         $this->averageQuality = round($records->avg('quality_rate') ?? 0, 2);
         $this->oeeScore = round($records->avg('oee_score') ?? 0, 2);
+        $this->lastUpdated = $records->max('last_updated') ? Carbon::parse($records->max('last_updated'))->format('d/m/Y H:i:s') : 'Belum ada data';
 
         // Get the latest record for detailed calculations
         $latestRecord = $records->last();
-        // Di dalam method loadData(), bagian pengambilan data dari latestRecord
         if ($latestRecord) {
             $this->plannedProductionTime = $latestRecord->planned_production_time;
             $this->operatingTime = $latestRecord->operating_time;
@@ -127,7 +138,6 @@ class OeeDetail extends Component
             $this->totalOutput = $latestRecord->total_output;
             $this->goodOutput = $latestRecord->good_output;
             $this->defectCount = $latestRecord->defect_count;
-            // Ambil ideal_cycle_time langsung dari OeeRecord
             $this->idealCycleTime = $latestRecord->ideal_cycle_time;
         }
 
@@ -139,6 +149,12 @@ class OeeDetail extends Component
             'quality' => $records->pluck('quality_rate')->toArray(),
             'oee' => $records->pluck('oee_score')->toArray()
         ];
+        
+        $endTime = microtime(true);
+        $duration = round($endTime - $startTime, 2);
+        Log::info("OEE detail data loaded in {$duration} seconds for machine {$this->machine->id}");
+        
+        $this->dispatch('chartDataUpdated', $this->chartData);
     }
 
     public function updatedSelectedPeriod()

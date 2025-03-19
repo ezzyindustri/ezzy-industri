@@ -19,6 +19,8 @@ use App\Http\Controllers\KaryawanDetailPdfController;
 use App\Livewire\Manajerial\OeeDashboard;
 use App\Livewire\Manajerial\OeeDetail;
 use App\Http\Controllers\OeePdfController;
+use Illuminate\Support\Facades\Http;
+
 
 
 
@@ -60,8 +62,13 @@ Route::prefix('manajerial')->middleware(['auth', 'role:manajerial'])->group(func
     ->name('karyawan.detail.pdf');
     Route::get('/oee-dashboard', \App\Livewire\Manajerial\OeeDashboard::class)
     ->name('manajerial.oee-dashboard');
+    // Ganti route ini
     Route::get('/manajerial/oee/{machineId}/detail', \App\Livewire\Manajerial\OeeDetail::class)
     ->name('manajerial.oee.detail');
+    
+    // Menjadi
+    Route::get('/oee/{machineId}/detail', \App\Livewire\Manajerial\OeeDetail::class)
+    ->name('manajerial.oee-detail');
     
     // Add these OEE PDF routes
     Route::get('/oee/dashboard/pdf', [OeePdfController::class, 'generateDashboardPdf'])
@@ -93,3 +100,104 @@ Route::post('/logout', function() {
     session()->regenerateToken();
     return redirect('/login');
 })->name('logout');
+
+
+
+
+// Route untuk testing preview email OEE Alert
+Route::get('/email/preview/oee-alert', function () {
+    // Buat data dummy untuk testing
+    $machine = new \App\Models\Machine();
+    $machine->id = 1;
+    $machine->name = 'Mesin Testing';
+    
+    $production = new \App\Models\Production();
+    $production->batch_number = 'TEST-001';
+    $production->start_time = now();
+    
+    // Buat dummy product
+    $product = new \App\Models\Product();
+    $product->name = 'Produk Testing';
+    $production->product = $product;
+    
+    // Buat dummy shift
+    $shift = new \App\Models\Shift();
+    $shift->name = 'Shift Pagi';
+    $production->shift = $shift;
+    
+    // Data OEE
+    $oeeScore = 75.5;
+    $targetOee = 85.0;
+    $difference = $targetOee - $oeeScore;
+    $url = url('/manajerial/oee/1/detail');
+    
+    // Render view email
+    return view('emails.oee-alert', [
+        'machine' => $machine,
+        'oeeScore' => $oeeScore,
+        'targetOee' => $targetOee,
+        'difference' => $difference,
+        'url' => $url,
+        'production' => $production
+    ]);
+})->name('email.preview.oee-alert');
+
+// Route untuk testing kirim WhatsApp OEE Alert
+Route::get('/whatsapp/send-test/oee-alert', function () {
+    // Buat data dummy untuk testing
+    $machine = new \App\Models\Machine();
+    $machine->id = 1;
+    $machine->name = 'Mesin Testing';
+    
+    $production = new \App\Models\Production();
+    $production->batch_number = 'TEST-001';
+    $production->start_time = now();
+    
+    // Buat dummy product
+    $product = new \App\Models\Product();
+    $product->name = 'Produk Testing';
+    $production->product = $product;
+    
+    // Buat dummy shift
+    $shift = new \App\Models\Shift();
+    $shift->name = 'Shift Pagi';
+    $production->shift = $shift;
+    
+    // Data OEE
+    $oeeScore = 75.5;
+    $targetOee = 85.0;
+    
+    // Kirim notifikasi ke WhatsApp yang ditentukan
+    $testPhone = request('phone', '6285187826862'); // Ganti dengan nomor WhatsApp untuk testing
+    
+    $whatsappService = app(\App\Services\WhatsAppService::class);
+    $result = $whatsappService->sendOeeAlert($testPhone, $machine, $oeeScore, $targetOee, $production);
+    
+    if ($result) {
+        return "WhatsApp OEE Alert telah dikirim ke $testPhone";
+    } else {
+        return "Gagal mengirim WhatsApp OEE Alert ke $testPhone. Periksa log untuk detail.";
+    }
+})->name('whatsapp.send-test.oee-alert');
+
+// Tambahkan route untuk testing kirim pesan WhatsApp sederhana
+Route::get('/whatsapp/send-simple-test', function () {
+    $phone = request('phone', '6285187826862');
+    
+    try {
+        $response = Http::withHeaders([
+            'Authorization' => config('services.fonnte.api_key')
+        ])->withoutVerifying()
+          ->post('https://api.fonnte.com/send', [
+            'target' => $phone,
+            'message' => 'Ini adalah pesan test dari EzzyIndustri. Waktu: ' . now()->format('H:i:s'),
+            'delay' => 1,
+            'countryCode' => '62'
+        ]);
+        
+        return "Pesan test sederhana dikirim ke $phone<br><br>Respons:<br><pre>" . 
+               json_encode($response->json(), JSON_PRETTY_PRINT) . "</pre>";
+    } catch (\Exception $e) {
+        return "Error: " . $e->getMessage();
+    }
+})->name('whatsapp.send-simple-test');

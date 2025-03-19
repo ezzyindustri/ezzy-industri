@@ -121,6 +121,7 @@
                                                     placeholder="Contoh: 0,0072" 
                                                     wire:change="checkMeasurement({{ $step->id }})" 
                                                     required>
+                                                <!-- Ubah instruksi untuk konsistensi -->
                                                 <small class="text-muted">Gunakan koma (,) sebagai pemisah desimal</small>
                                                 @error("measurements.{$step->id}")
                                                     <small class="text-danger">{{ $message }}</small>
@@ -218,17 +219,18 @@
         </script>
     @endif
 
+    <!-- Di bagian bawah file, sebelum tag penutup </div> -->
+    
     <!-- Include NG Form Modal -->
     @include('livewire.karyawan.quality-check.partials.ng-form-modal')
 
-    <!-- Di bagian bawah file -->
     <script>
         document.addEventListener('livewire:initialized', function () {
-            // Gunakan event listener untuk menunggu DOM sepenuhnya dimuat
-            Livewire.on('ng-detected', () => {
+            // Listener untuk menampilkan konfirmasi sebelum menampilkan modal NG
+            Livewire.on('show-ng-modal', () => {
                 Swal.fire({
                     title: 'Perhatian!',
-                    text: 'Terdapat pengukuran yang tidak sesuai standar (NG). Apakah Anda yakin ingin melanjutkan?',
+                    text: 'Terdapat pengukuran yang tidak sesuai standar (NG). Apakah Anda yakin ingin menyimpan data?',
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#3085d6',
@@ -237,20 +239,23 @@
                     cancelButtonText: 'Batal'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        // Pastikan elemen modal ada sebelum mencoba menampilkannya
-                        const modalElement = document.getElementById('ngFormModal');
-                        if (modalElement) {
-                            const modal = new bootstrap.Modal(modalElement);
-                            modal.show();
-                        } else {
-                            console.error('Modal element not found');
-                        }
+                        // Jika user konfirmasi, tampilkan modal NG Form
+                        var ngFormModal = new bootstrap.Modal(document.getElementById('ngFormModal'));
+                        ngFormModal.show();
                     }
+                });
+            });
+
+            // Listener untuk menampilkan alert biasa
+            Livewire.on('show-alert', (data) => {
+                Swal.fire({
+                    title: data.title || 'Informasi',
+                    text: data.message || 'Proses berhasil',
+                    icon: data.type || 'info',
+                    confirmButtonColor: '#3085d6',
+                    confirmButtonText: 'OK'
                 });
             });
         });
     </script>
-
-
-    
 </div>

@@ -8,15 +8,15 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::table('productions', function (Blueprint $table) {
-            $table->integer('target_per_shift')->nullable()->after('product');
+        Schema::table('oee_records', function (Blueprint $table) {
+            $table->boolean('is_initial_record')->default(false)->after('oee_score');
         });
     }
 
     public function down()
     {
-        Schema::table('productions', function (Blueprint $table) {
-            $table->dropColumn('target_per_shift');
+        Schema::table('oee_records', function (Blueprint $table) {
+            $table->dropColumn('is_initial_record');
         });
     }
 };
